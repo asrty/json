@@ -138,6 +138,12 @@ const json = {
                 required: true,
                 attributes: { options: ["", ...schemaKeys] },
               },
+              {
+                name: "valor_min",
+                label: "Valor min.",
+                type: "Bool",
+                default: false,
+              },
             ]
           : [
               {
@@ -220,6 +226,7 @@ const json = {
                   schemaMap[attrs.key]?.type === "Bool" &&
                   v &&
                   v[attrs.key],
+                min: attrs.valor_min ? 0 : undefined,
               })) +
           showUnits(schemaMap, attrs.key)
         );
