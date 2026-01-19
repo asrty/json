@@ -161,7 +161,7 @@ const json = {
           (hasSchema && schemaMap[k]?.options
             ? select(
                 {
-                  class: `json_subfield_edit_${validID(nm)}`,
+                  class: `form-control json_subfield_edit_${validID(nm)}`,
                   "data-subfield": encode(attrs.key),
                   id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
                   onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
@@ -179,7 +179,7 @@ const json = {
             : hasSchema &&
               (schemaMap[attrs.key]?.type || "").startsWith("Key to")
             ? select({
-                class: `json_subfield_edit_${validID(nm)} json_fkey_field`,
+                class: `form-control json_subfield_edit_${validID(nm)} json_fkey_field`,
                 "data-subfield": encode(k),
                 id: `json_subfield_${validID(nm)}_${validID(k)}`,
                 onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
@@ -204,7 +204,7 @@ const json = {
                       ["Integer", "Float"].includes(schemaMap[attrs.key]?.type)
                     ? "number"
                     : "text",
-                class: `json_subfield_edit_${validID(nm)}`,
+                class: `form-control json_subfield_edit_${validID(nm)}`,
                 "data-subfield": encode(attrs.key),
                 id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
                 onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
@@ -314,7 +314,7 @@ const json = {
             : schemaMap[k]?.type === "Calculation"
             ? input({
                 type: "text",
-                class: "json_calculation",
+                class: "form-control json_calculation",
                 "data-key": k,
                 "data-formula": encodeURIComponent(schemaMap[k].formula),
                 value: val,
@@ -322,7 +322,7 @@ const json = {
               })
             : (schemaMap[k]?.type || "").startsWith("Key to ")
             ? select({
-                class: "json_value json_fkey_field",
+                class: "form-control json_value json_fkey_field",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 value: val,
                 "data-selected": val,
@@ -338,7 +338,7 @@ const json = {
             : schemaMap[k]?.options
             ? select(
                 {
-                  class: "json_value",
+                  class: "form-control json_value",
                   onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                   value: val,
                 },
@@ -350,7 +350,7 @@ const json = {
             : schemaMap[k]?.type === "Integer" || schemaMap[k]?.type === "Float"
             ? input({
                 type: "number",
-                class: "json_value",
+                class: "form-control json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 step:
                   hasSchema && schemaMap[k]?.type === "Float" ? "any" : false,
@@ -358,7 +358,7 @@ const json = {
               }) + showUnits(schemaMap, k)
             : input({
                 type: "text",
-                class: "json_value",
+                class: "form-control json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 value: val,
               }) + showUnits(schemaMap, k);
@@ -372,7 +372,7 @@ const json = {
           ) +
           table(
             {
-              class: `table table-sm json-table-edit table-edit-${validID(nm)}`,
+              class: `form-control table table-sm json-table-edit table-edit-${validID(nm)}`,
               id: `table-edit-${validID(nm)}-${rndid}`,
               "data-schema-map": hasSchema
                 ? encodeURIComponent(JSON.stringify(schemaMap))
@@ -388,7 +388,7 @@ const json = {
                       hasSchema
                         ? select(
                             {
-                              class: "json_key",
+                              class: "form-control json_key",
                               onChange: `jsonTableEdit('${encodeURIComponent(
                                 nm
                               )}', '${rndid}')`,
@@ -407,7 +407,7 @@ const json = {
                                   type: schemaKeys.includes(k)
                                     ? "hidden"
                                     : "text",
-                                  class: "json_key_other d-block",
+                                  class: "form-control json_key_other d-block",
                                   onChange: `jsonTableEdit('${encode(
                                     nm
                                   )}', '${rndid}')`,
@@ -416,7 +416,7 @@ const json = {
                               : "")
                         : input({
                             type: "text",
-                            class: "json_key",
+                            class: "form-control json_key",
                             onChange: `jsonTableEdit('${encode(
                               nm
                             )}', '${rndid}')`,
