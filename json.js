@@ -226,7 +226,10 @@ const json = {
                   schemaMap[attrs.key]?.type === "Bool" &&
                   v &&
                   v[attrs.key],
-                min: attrs.valor_min ? 0 : undefined,
+                min: hasSchema &&
+                  ["Integer", "Float"].includes(schemaMap[attrs.key]?.type) &&
+                  attrs.valor_min
+                    ? 0 : undefined,
               })) +
           showUnits(schemaMap, attrs.key)
         );
@@ -368,6 +371,7 @@ const json = {
                 class: "form-control json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 value: val,
+                min: attrs.valor_min ? 0 : undefined,
               }) + showUnits(schemaMap, k);
         return (
           script(
