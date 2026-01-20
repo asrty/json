@@ -173,7 +173,7 @@ const json = {
                   onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
                     attrs.key
                   )}', this)`,
-                  value: v ? v[k] || "0" : "",
+                  value: v ? v[k] || "" : 0,
                 },
                 option({ selected: !v?.[k] }, ""),
                 schemaMap[k].options
@@ -191,7 +191,7 @@ const json = {
                 onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
                   k
                 )}', this)`,
-                value: v ? v[k] || "0" : "",
+                value: v ? v[k] || "" : 0,
                 "data-selected": v ? v[k] || "" : "",
                 "data-fetch-options": encodeURIComponent(
                   JSON.stringify({
@@ -220,7 +220,7 @@ const json = {
                   hasSchema && schemaMap[attrs.key]?.type === "Float"
                     ? "any"
                     : false,
-                value: v ? v[attrs.key] || "0" : "",
+                value: v ? v[attrs.key] || "" : 0,
                 checked:
                   hasSchema &&
                   schemaMap[attrs.key]?.type === "Bool" &&
