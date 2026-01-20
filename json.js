@@ -174,6 +174,10 @@ const json = {
                     attrs.key
                   )}', this)`,
                   value: v ? v[k] || "" : 0,
+                min: hasSchema &&
+                  ["Integer", "Float"].includes(schemaMap[attrs.key]?.type) &&
+                  attrs.valor_min
+                    ? 0 : undefined,
                 },
                 option({ selected: !v?.[k] }, ""),
                 schemaMap[k].options
@@ -192,6 +196,10 @@ const json = {
                   k
                 )}', this)`,
                 value: v ? v[k] || "" : 0,
+                min: hasSchema &&
+                  ["Integer", "Float"].includes(schemaMap[attrs.key]?.type) &&
+                  attrs.valor_min
+                    ? 0 : undefined,
                 "data-selected": v ? v[k] || "" : "",
                 "data-fetch-options": encodeURIComponent(
                   JSON.stringify({
