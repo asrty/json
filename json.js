@@ -403,14 +403,14 @@ const json = {
                   value: val,
                   ...(placeholder ? { placeholder } : {}),
                 });
-                /*const units = schemaMap[k]?.units;
+                const units = schemaMap[k]?.units;
                 return units
                   ? div(
                       { class: "input-group" },
                       inp,
-                      span({ class: "input-group-text units" }, units)
+                      /*span({ class: "input-group-text units" }, units)*/
                     )
-                  : inp;*/
+                  : inp;
               })()
             : input({
                 type: "text",
