@@ -244,13 +244,13 @@ const json = {
                         : undefined,
                   });
 
-            if (hasSchema && schemaMap[attrs.key]?.units) {
+            /*if (hasSchema && schemaMap[attrs.key]?.units) {
               control = div(
                 { class: "input-group" },
                 control,
                 span({ class: "input-group-text units" }, schemaMap[attrs.key].units)
               );
-            }
+            }*/
 
             return control;
           })()
@@ -500,6 +500,32 @@ const json = {
     keys_expand_columns: {
       isEdit: false,
       configFields: (field) => {
+        const { hasSchema, schemaKeys } = getSchemaMap(field.attributes);
+
+        return hasSchema
+          ? [
+              {
+                name: "_all_keys",
+                label: "All keys",
+                type: "Bool",
+                default: true,
+              },
+              ...schemaKeys.map((k) => ({
+                name: k,
+                label: k,
+                type: "Bool",
+              })),
+            ]
+          : [
+              {
+                name: "keys",
+                label: "Keys",
+                type: "String",
+                sublabel: "Separate keys by commas",
+              },
+            ];
+      },
+      expandColumns: (field, attributes, column) => {
         const { hasSchema, schemaKeys, schemaMap } = getSchemaMap(
           field.attributes
         );
