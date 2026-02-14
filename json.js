@@ -18,6 +18,7 @@ const {
   span,
   nbsp,
   section,
+  div,
 } = require("@saltcorn/markup/tags");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { features, getState } = require("@saltcorn/data/db/state");
@@ -40,10 +41,6 @@ const getSchemaMap = (attrs) => {
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
-const showUnits = (schemaMap, k) =>
-  nbsp + span({ class: "units" }, (schemaMap && schemaMap[k]?.units) || "");
-
-//https://stackoverflow.com/a/9635698
 function validID(s) {
   return s
     ? s
@@ -63,6 +60,9 @@ const showVal = (hasSchema, schemaMap, k, v) =>
         )}/${schemaMap[k].summary_field}/show?id=${text(v)}`,
       })
     : text(v);
+
+const showUnits = (schemaMap, k) =>
+  nbsp + span({ class: "units" }, (schemaMap && schemaMap[k]?.units) || "");
 
 const show_with_html = {
   configFields: [
@@ -156,6 +156,23 @@ const json = {
       run: (nm, v, attrs, cls, required, field) => {
         const { hasSchema, schemaMap } = getSchemaMap(attrs);
         const k = attrs.key;
+
+        let step = false;
+        let placeholder = "";
+        if (hasSchema) {
+          const sch = schemaMap[attrs.key];
+          if (sch?.type === "Float") {
+            const dec = parseInt(sch?.units) || 2;
+            step = (1 / Math.pow(10, dec)).toFixed(dec);
+            placeholder = "0" + (dec > 0 ? "," + "0".repeat(dec) : "");
+          } else if (sch?.type === "Integer") {
+            step = "1";
+            placeholder = "0";
+          } else if (sch?.type === "String") {
+            placeholder = "Digite o valor";
+          }
+        }
+
         return (
           script(
             domReady(
@@ -164,74 +181,79 @@ const json = {
               )}, ${JSON.stringify(k)})`
             )
           ) +
-          (hasSchema && schemaMap[k]?.options
-            ? select(
-                {
-                  class: `form-control json_subfield_edit_${validID(nm)}`,
-                  "data-subfield": encode(attrs.key),
-                  id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
-                  onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
-                    attrs.key
-                  )}', this)`,
-                  value: v ? v[k] || "" : 0,
-                },
-                option({ selected: !v?.[k] }, ""),
-                schemaMap[k].options
-                  .split(",")
-                  .map((o) =>
-                    option({ selected: v?.[attrs.key] === o.trim() }, o.trim())
-                  )
-              )
-            : hasSchema &&
-              (schemaMap[attrs.key]?.type || "").startsWith("Key to")
-            ? select({
-                class: `form-control json_subfield_edit_${validID(nm)} json_fkey_field`,
-                "data-subfield": encode(k),
-                id: `json_subfield_${validID(nm)}_${validID(k)}`,
-                onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
-                  k
-                )}', this)`,
-                value: v ? v[k] || "" : 0,
-                "data-selected": v ? v[k] || "" : "",
-                "data-fetch-options": encodeURIComponent(
-                  JSON.stringify({
-                    table: schemaMap[k].type.replace("Key to ", ""),
-                    summary_field: schemaMap[k].summary_field,
-                    refname: "id",
-                    whereParsed: {},
+          (() => {
+            let control =
+              hasSchema && schemaMap[k]?.options
+                ? select({
+                    class: `form-control json_subfield_edit_${validID(nm)}`,
+                    "data-subfield": encode(attrs.key),
+                    id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
+                    onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
+                      attrs.key
+                    )}', this)`,
+                    value: v ? v[k] || "" : "",
+                  },
+                  option({ selected: !v?.[k] }, ""),
+                  schemaMap[k].options
+                    .split(",")
+                    .map((o) =>
+                      option({ selected: v?.[attrs.key] === o.trim() }, o.trim())
+                    )
+                )
+                : hasSchema && (schemaMap[attrs.key]?.type || "").startsWith("Key to")
+                ? select({
+                    class: `form-control json_subfield_edit_${validID(nm)} json_fkey_field`,
+                    "data-subfield": encode(k),
+                    id: `json_subfield_${validID(nm)}_${validID(k)}`,
+                    onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(k)}', this)`,
+                    value: v ? v[k] || "" : "",
+                    "data-selected": v ? v[k] || "" : "",
+                    "data-fetch-options": encodeURIComponent(
+                      JSON.stringify({
+                        table: schemaMap[k].type.replace("Key to ", ""),
+                        summary_field: schemaMap[k].summary_field,
+                        refname: "id",
+                        whereParsed: {},
+                      })
+                    ),
                   })
-                ),
-              })
-            : input({
-                type:
-                  hasSchema && schemaMap[attrs.key]?.type === "Bool"
-                    ? "checkbox"
-                    : hasSchema &&
-                      ["Integer", "Float"].includes(schemaMap[attrs.key]?.type)
-                    ? "number"
-                    : "text",
-                class: `form-control json_subfield_edit_${validID(nm)}`,
-                "data-subfield": encode(attrs.key),
-                id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
-                onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(
-                  attrs.key
-                )}', this)`,
-                step:
-                  hasSchema && schemaMap[attrs.key]?.type === "Float"
-                    ? "any"
-                    : false,
-                value: v ? v[attrs.key] || "" : 0,
-                checked:
-                  hasSchema &&
-                  schemaMap[attrs.key]?.type === "Bool" &&
-                  v &&
-                  v[attrs.key],
-                min: hasSchema &&
-                  ["Integer", "Float"].includes(schemaMap[attrs.key]?.type) &&
-                  attrs.valor_min
-                    ? 0 : undefined,
-              })) +
-          showUnits(schemaMap, attrs.key)
+                : input({
+                    type:
+                      hasSchema && schemaMap[attrs.key]?.type === "Bool"
+                        ? "checkbox"
+                        : hasSchema && ["Integer", "Float"].includes(schemaMap[attrs.key]?.type)
+                        ? "number"
+                        : "text",
+                    class: `form-control json_subfield_edit_${validID(nm)}`,
+                    "data-subfield": encode(attrs.key),
+                    id: `json_subfield_${validID(nm)}_${validID(attrs.key)}`,
+                    onChange: `jsonSubfieldEdit('${encode(nm)}', '${encode(attrs.key)}', this)`,
+                    step,
+                    ...(placeholder ? { placeholder } : {}),
+                    value: v ? v[attrs.key] || "" : "",
+                    checked:
+                      hasSchema &&
+                      schemaMap[attrs.key]?.type === "Bool" &&
+                      v &&
+                      v[attrs.key],
+                    min:
+                      hasSchema &&
+                      ["Integer", "Float"].includes(schemaMap[attrs.key]?.type) &&
+                      attrs.valor_min
+                        ? 0
+                        : undefined,
+                  });
+
+            if (hasSchema && schemaMap[attrs.key]?.units) {
+              control = div(
+                { class: "input-group" },
+                control,
+                span({ class: "input-group-text units" }, schemaMap[attrs.key].units)
+              );
+            }
+
+            return control;
+          })()
         );
       },
     },
@@ -310,18 +332,33 @@ const json = {
           : [];
       },
       run: (nm, v, attrs, cls) => {
-        //console.log(attrs);
         const { hasSchema, schemaMap, schemaKeys } = getSchemaMap(attrs);
         const rndid = Math.floor(Math.random() * 16777215).toString(16);
-        const valueInput = (k, val) =>
-          schemaMap[k]?.type === "Bool"
+
+        const valueInput = (k, val) => {
+          const type = schemaMap[k]?.type || "";
+
+          let step = false;
+          let placeholder = "";
+          if (type === "Float") {
+            const dec = parseInt(schemaMap[k]?.units) || 2;
+            step = (1 / Math.pow(10, dec)).toFixed(dec);
+            placeholder = "0" + (dec > 0 ? "," + "0".repeat(dec) : "");
+          } else if (type === "Integer") {
+            step = "1";
+            placeholder = "0";
+          } else if (type === "String") {
+            placeholder = "Digite o valor";
+          }
+
+          return type === "Bool"
             ? input({
                 type: "checkbox",
                 class: "json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 checked: val,
               })
-            : schemaMap[k]?.type === "Calculation"
+            : type === "Calculation"
             ? input({
                 type: "text",
                 class: "form-control json_calculation",
@@ -330,7 +367,7 @@ const json = {
                 value: val,
                 readonly: true,
               })
-            : (schemaMap[k]?.type || "").startsWith("Key to ")
+            : type.startsWith("Key to ")
             ? select({
                 class: "form-control json_value json_fkey_field",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
@@ -346,39 +383,48 @@ const json = {
                 ),
               })
             : schemaMap[k]?.options
-            ? select(
-                {
-                  class: "form-control json_value",
-                  onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
-                  value: val,
-                },
-                option({ selected: !val }, ""),
-                schemaMap[k].options
-                  .split(",")
-                  .map((o) => option({ selected: val === o.trim() }, o.trim()))
-              )
-            : schemaMap[k]?.type === "Integer" || schemaMap[k]?.type === "Float"
-            ? input({
-                type: "number",
+            ? select({
                 class: "form-control json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
-                step:
-                  hasSchema && schemaMap[k]?.type === "Float" ? "any" : false,
                 value: val,
-              }) + showUnits(schemaMap, k)
+              },
+              option({ selected: !val }, ""),
+              schemaMap[k].options
+                .split(",")
+                .map((o) => option({ selected: val === o.trim() }, o.trim()))
+            )
+            : type === "Integer" || type === "Float"
+            ? (() => {
+                const inp = input({
+                  type: "number",
+                  class: "form-control json_value",
+                  onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
+                  step,
+                  value: val,
+                  ...(placeholder ? { placeholder } : {}),
+                });
+                const units = schemaMap[k]?.units;
+                return units
+                  ? div(
+                      { class: "input-group" },
+                      inp,
+                      span({ class: "input-group-text units" }, units)
+                    )
+                  : inp;
+              })()
             : input({
                 type: "text",
                 class: "form-control json_value",
                 onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                 value: val,
-                min: attrs.valor_min ? 0 : undefined,
-              }) + showUnits(schemaMap, k);
+                ...(placeholder ? { placeholder } : {}),
+              });
+        };
+
         return (
           script(
             domReady(
-              `initJsonTableEdit(${JSON.stringify(
-                nm
-              )}, '${rndid}', ${JSON.stringify(v)})`
+              `initJsonTableEdit(${JSON.stringify(nm)}, '${rndid}', ${JSON.stringify(v)})`
             )
           ) +
           table(
@@ -400,9 +446,7 @@ const json = {
                         ? select(
                             {
                               class: "form-control json_key",
-                              onChange: `jsonTableEdit('${encodeURIComponent(
-                                nm
-                              )}', '${rndid}')`,
+                              onChange: `jsonTableEdit('${encodeURIComponent(nm)}', '${rndid}')`,
                             },
                             attrs.schema.map(({ key }) =>
                               option({ selected: key === k }, key)
@@ -419,18 +463,14 @@ const json = {
                                     ? "hidden"
                                     : "text",
                                   class: "form-control json_key_other d-block",
-                                  onChange: `jsonTableEdit('${encode(
-                                    nm
-                                  )}', '${rndid}')`,
+                                  onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                                   value: k,
                                 })
                               : "")
                         : input({
                             type: "text",
                             class: "form-control json_key",
-                            onChange: `jsonTableEdit('${encode(
-                              nm
-                            )}', '${rndid}')`,
+                            onChange: `jsonTableEdit('${encode(nm)}', '${rndid}')`,
                             value: k,
                           })
                     ),
@@ -438,9 +478,7 @@ const json = {
                     td(
                       i({
                         class: "fas fa-times",
-                        onClick: `jsonTableDeleteRow('${encode(
-                          nm
-                        )}','${rndid}', this)`,
+                        onClick: `jsonTableDeleteRow('${encode(nm)}','${rndid}', this)`,
                       })
                     )
                   )
@@ -462,32 +500,6 @@ const json = {
     keys_expand_columns: {
       isEdit: false,
       configFields: (field) => {
-        const { hasSchema, schemaKeys } = getSchemaMap(field.attributes);
-
-        return hasSchema
-          ? [
-              {
-                name: "_all_keys",
-                label: "All keys",
-                type: "Bool",
-                default: true,
-              },
-              ...schemaKeys.map((k) => ({
-                name: k,
-                label: k,
-                type: "Bool",
-              })),
-            ]
-          : [
-              {
-                name: "keys",
-                label: "Keys",
-                type: "String",
-                sublabel: "Separate keys by commas",
-              },
-            ];
-      },
-      expandColumns: (field, attributes, column) => {
         const { hasSchema, schemaKeys, schemaMap } = getSchemaMap(
           field.attributes
         );
@@ -550,7 +562,6 @@ const json = {
             isEdit: false,
             isFilter: true,
             blockDisplay: true,
-            /* https://stackoverflow.com/a/31083391 */
             run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
               const stateKeyLte = encodeURIComponent(
                 `${nm}[${attrs.key}__lte]`
@@ -565,9 +576,7 @@ const json = {
                 span({ class: "rangeValues" }),
                 input({
                   ...(isdef(stateValueGte)
-                    ? {
-                        value: text_attr(stateValueGte),
-                      }
+                    ? { value: text_attr(stateValueGte) }
                     : isdef(attrs.min)
                     ? { value: text_attr(attrs.min) }
                     : {}),
@@ -579,9 +588,7 @@ const json = {
                 }),
                 input({
                   ...(isdef(stateValueLte)
-                    ? {
-                        value: text_attr(stateValueLte),
-                      }
+                    ? { value: text_attr(stateValueLte) }
                     : isdef(attrs.max)
                     ? { value: text_attr(attrs.max) }
                     : {}),
@@ -701,9 +708,10 @@ const json = {
                 },
                 {
                   name: "units",
-                  label: "Units",
+                  label: "Decimal places (Float)",
                   type: "String",
                   showIf: { type: "Float" },
+                  sublabel: "Number of decimal places (e.g., 2 → 0.00)",
                 },
                 {
                   name: "options",
